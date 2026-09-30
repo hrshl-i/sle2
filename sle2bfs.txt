@@ -1,0 +1,202 @@
+from collections import deque
+import time
+
+# ==========================================
+# SLE-2: BFS vs DFS Performance Analysis
+# ==========================================
+
+# Create a complete binary tree
+# Depth 14 gives 32,767 nodes
+TREE_DEPTH = 14
+
+
+def create_graph(depth):
+    graph = {}
+    total_nodes = (2 ** (depth + 1)) - 1
+
+    for node in range(total_nodes):
+        left_child = 2 * node + 1
+        right_child = 2 * node + 2
+
+        neighbors = []
+
+        if left_child < total_nodes:
+            neighbors.append(left_child)
+
+        if right_child < total_nodes:
+            neighbors.append(right_child)
+
+        graph[node] = neighbors
+
+    return graph
+
+
+# ==========================================
+# BFS Algorithm
+# ==========================================
+
+def bfs(graph, start, target):
+    queue = deque([start])
+    visited = set()
+    nodes_expanded = 0
+
+    while queue:
+        node = queue.popleft()
+
+        if node in visited:
+            continue
+
+        visited.add(node)
+        nodes_expanded += 1
+
+        if node == target:
+            return nodes_expanded
+
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                queue.append(neighbor)
+
+    return nodes_expanded
+
+
+# ==========================================
+# DFS Algorithm
+# ==========================================
+
+def dfs(graph, start, target):
+    stack = [start]
+    visited = set()
+    nodes_expanded = 0
+
+    while stack:
+        node = stack.pop()
+
+        if node in visited:
+            continue
+
+        visited.add(node)
+        nodes_expanded += 1
+
+        if node == target:
+            return nodes_expanded
+
+        # Reverse order makes DFS explore
+        # the left branch first.
+        for neighbor in reversed(graph[node]):
+            if neighbor not in visited:
+                stack.append(neighbor)
+
+    return nodes_expanded
+
+
+# ==========================================
+# Timing Function
+# ==========================================
+
+def measure_time(search_function, graph, start, target,
+                 number_of_runs=5):
+
+    times = []
+
+    for _ in range(number_of_runs):
+        start_time = time.perf_counter()
+
+        search_function(graph, start, target)
+
+        end_time = time.perf_counter()
+
+        elapsed_ms = (end_time - start_time) * 1000
+        times.append(elapsed_ms)
+
+    average_time = sum(times) / len(times)
+    minimum_time = min(times)
+    maximum_time = max(times)
+
+    return times, average_time, minimum_time, maximum_time
+
+
+# ==========================================
+# Main Program
+# ==========================================
+
+graph = create_graph(TREE_DEPTH)
+
+start_node = 0
+
+# Deepest leftmost node
+target_node = (2 ** TREE_DEPTH) - 1
+
+number_of_nodes = len(graph)
+
+print("==========================================")
+print("SLE-2: BFS vs DFS PROFILING")
+print("==========================================")
+
+print("Total Graph Nodes:", number_of_nodes)
+print("Tree Depth:", TREE_DEPTH)
+print("Start Node:", start_node)
+print("Target Node:", target_node)
+
+# Count nodes
+bfs_nodes = bfs(graph, start_node, target_node)
+dfs_nodes = dfs(graph, start_node, target_node)
+
+print("\n========== NODE COUNT RESULTS ==========")
+
+print("BFS Nodes Expanded:", bfs_nodes)
+print("DFS Nodes Expanded:", dfs_nodes)
+
+# Measure performance
+number_of_runs = 5
+
+bfs_times, bfs_avg, bfs_min, bfs_max = measure_time(
+    bfs, graph, start_node, target_node, number_of_runs
+)
+
+dfs_times, dfs_avg, dfs_min, dfs_max = measure_time(
+    dfs, graph, start_node, target_node, number_of_runs
+)
+
+print("\n========== TIME RESULTS ==========")
+
+print("Number of Runs:", number_of_runs)
+
+print("\nBFS Individual Times (ms):")
+for i, value in enumerate(bfs_times, 1):
+    print("Run", i, ":", value)
+
+print("\nDFS Individual Times (ms):")
+for i, value in enumerate(dfs_times, 1):
+    print("Run", i, ":", value)
+
+print("\n========== FINAL COMPARISON ==========")
+
+print("\nBFS:")
+print("Average Time (ms):", bfs_avg)
+print("Minimum Time (ms):", bfs_min)
+print("Maximum Time (ms):", bfs_max)
+print("Nodes Expanded:", bfs_nodes)
+
+print("\nDFS:")
+print("Average Time (ms):", dfs_avg)
+print("Minimum Time (ms):", dfs_min)
+print("Maximum Time (ms):", dfs_max)
+print("Nodes Expanded:", dfs_nodes)
+
+print("\n========== OBSERVATION ==========")
+
+if bfs_avg < dfs_avg:
+    print("BFS was faster in this experiment.")
+elif dfs_avg < bfs_avg:
+    print("DFS was faster in this experiment.")
+else:
+    print("Both algorithms had equal average time.")
+
+if bfs_nodes < dfs_nodes:
+    print("BFS expanded fewer nodes.")
+elif dfs_nodes < bfs_nodes:
+    print("DFS expanded fewer nodes.")
+else:
+    print("Both algorithms expanded equal nodes.")
+
+print("\nExperiment completed successfully.")
